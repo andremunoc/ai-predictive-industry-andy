@@ -47,6 +47,13 @@ desktop.ini
 # Ignore heavy raw data files ONLY
 data/raw/
 
+# ALLOW these to be uploaded (commented out)
+# data/processed/
+# models/
+# *.pkl
+# *.joblib
+# *.h5
+
 # ==========================================
 # SECRETS AND ENVIRONMENT VARIABLES
 # ==========================================
