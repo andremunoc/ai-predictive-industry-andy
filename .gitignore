@@ -1,0 +1,69 @@
+# ==========================================
+# PYTHON ARTIFACTS
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ==========================================
+# VIRTUAL ENVIRONMENTS
+# ==========================================
+venv/
+env/
+.venv/
+ENV/
+.conda/
+
+# ==========================================
+# JUPYTER NOTEBOOKS
+# ==========================================
+.ipynb_checkpoints/
+
+# ==========================================
+# IDE AND EDITOR FILES
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ==========================================
+# OPERATING SYSTEM FILES
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# DATA AND MODELS
+# ==========================================
+# Ignore heavy raw data files ONLY
+data/raw/
+
+# ==========================================
+# SECRETS AND ENVIRONMENT VARIABLES
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+credentials.json
+secrets.json
+config_private.py
+
+# ==========================================
+# LOGS AND TEMPORARY FILES
+# ==========================================
+*.log
+logs/
+*.tmp
+*.temp
+*.bak
