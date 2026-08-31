@@ -94,7 +94,7 @@ Figure 4, shows the monitoring dashboard for the AI-powered industrial predictiv
 <p align="center">
   <img src="docs/DashBoard.png" alt="DashBoard" width="100%">
   <br>
-  <sub><b>Figure 3:</b> Bearing Life Monitor.</sub>
+  <sub><b>Figure 4:</b> Bearing Life Monitor.</sub>
 </p>
 
 ### 5. Modular Data-Pipeline Architecture (Data Pipelines & MLOps Lifecycle)
@@ -123,7 +123,7 @@ IBM Bob was instrumental in writing and optimizing the digital signal processing
 <p align="center">
   <img src="docs/IBM Bob Signal Processing.png" alt="IBM Bob Signal Processing" width="100%">
   <br>
-  <sub><b>Figure X:</b> IBM Bob generating the SciPy/NumPy signal processing and label assignment code.</sub>
+  <sub><b>Figure 6:</b> IBM Bob generating the SciPy/NumPy signal processing and label assignment code.</sub>
 </p>
 
 ### 2. Machine Learning Pipeline & Evaluation
@@ -132,7 +132,7 @@ During the modeling phase, IBM Bob assisted in structuring the `scikit-learn` pi
 <p align="center">
   <img src="docs/IBM Bob ML Pipeline.png" alt="IBM Bob ML Pipeline" width="100%">
   <br>
-  <sub><b>Figure Y:</b> IBM Bob structuring the scikit-learn model training and evaluation loop.</sub>
+  <sub><b>Figure 7:</b> IBM Bob structuring the scikit-learn model training and evaluation loop.</sub>
 </p>
 
 ### 3. Backend API Development (FastAPI)
@@ -141,7 +141,7 @@ For the deployment phase, IBM Bob designed the RESTful API using FastAPI. It gen
 <p align="center">
   <img src="docs/bob_fastapi.png" alt="IBM Bob FastAPI" width="100%">
   <br>
-  <sub><b>Figure Z:</b> IBM Bob generating the FastAPI endpoint, Pydantic models, and inference logic.</sub>
+  <sub><b>Figure 8:</b> IBM Bob generating the FastAPI endpoint, Pydantic models, and inference logic.</sub>
 </p>
 
 ---
@@ -157,7 +157,7 @@ To maximize the efficacy of IBM Bob, a structured "Role + Context + Constraint" 
 <p align="center">
   <img src="docs/bob_prompt_fastapi.png" alt="Prompt FastAPI" width="100%">
   <br>
-  <sub><b>Figure W:</b> Prompting strategy for FastAPI generation and IBM Bob's optimized response.</sub>
+  <sub><b>Figure 9:</b> Prompting strategy for FastAPI generation and IBM Bob's optimized response.</sub>
 </p>
 
 ### Case Study 2: Vectorized FFT Extraction
@@ -168,5 +168,5 @@ To maximize the efficacy of IBM Bob, a structured "Role + Context + Constraint" 
 <p align="center">
   <img src="docs/bob_prompt_fft.png" alt="Prompt FFT" width="100%">
   <br>
-  <sub><b>Figure V:</b> Prompting strategy for FFT extraction and IBM Bob's vectorized code generation.</sub>
+  <sub><b>Figure 10:</b> Prompting strategy for FFT extraction and IBM Bob's vectorized code generation.</sub>
 </p>
