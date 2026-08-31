@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bearing Life Monitor</title>
+<style>
+  :root {
+    --blue:   #0f62fe;
+    --ink:    #0f2a43;
+    --muted:  #5a6b7d;
+    --line:   #dfe6ee;
+    --green:  #2e7d32;
+    --yellow: #f9a825;
+    --red:    #c62828;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #f7f9fc; color: var(--ink); }
+
+  /* ── Header ─────────────────────────────────────────────────── */
+  header { background: #fff; text-align: center; padding: 10px 12px 14px; border-bottom: 4px solid var(--blue); }
+  .kicker  { color: var(--blue);  font-weight: 800; letter-spacing: 3px;  font-size: .95rem; }
+  .kicker2 { color: var(--muted); font-weight: 700; letter-spacing: 4px;  font-size: .78rem; margin-top: 2px; }
+  h1 { color: var(--blue); font-size: clamp(1.6rem, 3.5vw, 2.8rem); letter-spacing: 2px; text-transform: uppercase; margin: 4px 0 2px; }
+  .sub { color: var(--muted); font-weight: 600; font-size: .85rem; }
+
+  /* ── Layout ──────────────────────────────────────────────────── */
+  .wrap { max-width: 1500px; margin: 0 auto; padding: 10px 16px; }
+
+  /* ── Controls ────────────────────────────────────────────────── */
+  .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  button { font-size: 1rem; font-weight: 800; padding: 10px 22px; border-radius: 10px; border: none; cursor: pointer; transition: opacity .15s; }
+  button:hover { opacity: .85; }
+  #playBtn  { background: var(--blue); color: #fff; }
+  #resetBtn { background: #e0e0e0;    color: var(--ink); }
+  .pbar  { flex: 1; min-width: 200px; height: 12px; background: #e0e0e0; border-radius: 8px; overflow: hidden; }
+  .pfill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--green), var(--yellow), var(--red)); transition: width .1s linear; }
+  #progLabel { font-weight: 800; color: var(--muted); font-size: .9rem; min-width: 180px; text-align: right; }
+
+  /* ── Main grid ───────────────────────────────────────────────── */
+  .grid { display: grid; grid-template-columns: 250px 1fr 330px; gap: 12px; }
+  @media (max-width: 950px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ── Cards ───────────────────────────────────────────────────── */
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px; text-align: center; }
+  .card h3 { color: var(--muted); font-size: .75rem; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+
+  /* ── Andon traffic light ─────────────────────────────────────── */
+  .traffic { background: #101418; border-radius: 14px; padding: 14px 18px; display: inline-flex; flex-direction: column; gap: 12px; }
+  .lamprow { display: flex; align-items: center; gap: 12px; }
+  .lamp { width: 46px; height: 46px; border-radius: 50%; background: #2a2f36; opacity: .25; transition: opacity .3s; }
+  .lamp.on.g { background: #43a047; opacity: 1; box-shadow: 0 0 24px #43a047; }
+  .lamp.on.y { background: #fdd835; opacity: 1; box-shadow: 0 0 24px #fdd835; }
+  .lamp.on.r { background: #e53935; opacity: 1; box-shadow: 0 0 24px #e53935; animation: blink .8s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+  .llabel { color: #8fa0b0; font-weight: 800; letter-spacing: 2px; font-size: .75rem; }
+
+  /* ── Status banner ───────────────────────────────────────────── */
+  #banner { border-radius: 12px; padding: 10px 18px; font-size: clamp(.95rem, 1.8vw, 1.3rem); font-weight: 900; color: #fff; margin: 10px 0; text-align: center; transition: background .4s; }
+  @keyframes bannerBlink { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+
+  /* ── KPIs ────────────────────────────────────────────────────── */
+  .kpis { display: flex; flex-direction: column; gap: 14px; justify-content: center; height: 100%; }
+  .kpi .v { font-size: 1.55rem; font-weight: 900; }
+  .kpi .l { color: var(--muted); font-weight: 800; font-size: .68rem; letter-spacing: 1.5px; margin-top: 2px; }
+
+  /* ── Gauge SVG ───────────────────────────────────────────────── */
+  #gauge { width: 100%; max-width: 400px; }
+
+  /* ── Trend chart canvas ──────────────────────────────────────── */
+  #chart { display: block; width: 100%; height: 190px; border: 1px solid var(--line); border-radius: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">🤖 AI BUILDERS CHALLENGE — IBM BOB</div>
+  <div class="kicker2">WILDCARD CHALLENGE · FUTURE OF WORK · AUG 2026</div>
+  <h1>🏭 Bearing Life Monitor</h1>
+  <div class="sub">AI-Powered Predictive Maintenance · NASA Bearing Run-to-Failure</div>
+</header>
+
+<div class="wrap">
+
+  <!-- Controls -->
+  <div class="controls">
+    <button id="playBtn">▶ PLAY</button>
+    <button id="resetBtn">🔄 RESET</button>
+    <div class="pbar"><div class="pfill" id="pfill"></div></div>
+    <span id="progLabel">LIFE CONSUMED: 0%</span>
+  </div>
+
+  <!-- Main grid: Andon | Gauge | KPIs -->
+  <div class="grid">
+
+    <!-- Andon traffic light -->
+    <div class="card">
+      <h3>Andon — Model State</h3>
+      <div class="traffic">
+        <div class="lamprow">
+          <div class="lamp r" id="lampR"></div>
+          <span class="llabel">FAILURE</span>
+        </div>
+        <div class="lamprow">
+          <div class="lamp y" id="lampY"></div>
+          <span class="llabel">EARLY WEAR</span>
+        </div>
+        <div class="lamprow">
+          <div class="lamp g" id="lampG"></div>
+          <span class="llabel">NORMAL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gauge velocimeter -->
+    <div class="card">
+      <h3>Vibration RMS — Velocimeter</h3>
+      <svg id="gauge" viewBox="0 0 220 135" role="img" aria-label="RMS Gauge"></svg>
+    </div>
+
+    <!-- Live KPIs -->
+    <div class="card">
+      <h3>Live KPIs</h3>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="v" id="kHealth">—</div>
+          <div class="l">HEALTH SCORE</div>
+        </div>
+        <div class="kpi">
+          <div class="v" id="kConf">—</div>
+          <div class="l">MODEL CONFIDENCE</div>
+        </div>
+        <div class="kpi">
+          <div class="v" id="kClock">—</div>
+          <div class="l">SIM CLOCK</div>
+        </div>
+        <div class="kpi">
+          <div class="v" id="kMatch">—</div>
+          <div class="l">VS GROUND TRUTH</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- Status banner -->
+  <div id="banner">⏳ Loading model predictions…</div>
+
+  <!-- RMS trend chart -->
+  <canvas id="chart"></canvas>
+
+</div><!-- /wrap -->
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   Configuration
+════════════════════════════════════════════════════════════════ */
+const API   = "http://localhost:8000";
+const FEATS = [
+  "b1_rms","b1_kurtosis","b1_skewness",
+  "peak_freq_hz","spectral_centroid","spectral_energy",
+  "top_freq_1_hz","top_amp_1","top_freq_2_hz","top_amp_2",
+  "top_freq_3_hz","top_amp_3","top_freq_4_hz","top_amp_4",
+  "top_freq_5_hz","top_amp_5"
+];
+const MAX_RMS = 0.75;   // upper bound for gauge / chart scaling
+const DUR     = 12000;  // animation duration in ms (12 seconds)
+
+const COLOR = { Normal: "#2e7d32", Wear: "#f9a825", Failure: "#c62828" };
+const ACTION = {
+  Normal:  "✅ HEALTHY OPERATION — NO ACTION REQUIRED",
+  Wear:    "🛠️ EARLY WEAR — SCHEDULE TECHNICIAN WITHIN 48 H",
+  Failure: "🚨 IMMINENT FAILURE — STOP MACHINE · URGENT MAINTENANCE"
+};
+
+/* ════════════════════════════════════════════════════════════════
+   State
+════════════════════════════════════════════════════════════════ */
+let rows      = [];   // parsed CSV rows
+let preds     = [];   // predictions from /predict_batch
+let iWear     = 600;  // index where Wear phase starts
+let iFail     = 800;  // index where Failure phase starts
+let playing   = false;
+let t0        = 0;
+let cur       = -1;
+let raf       = null;
+let lastState = "Normal";
+
+/* ════════════════════════════════════════════════════════════════
+   Helpers
+════════════════════════════════════════════════════════════════ */
+/**
+ * Normalise API label strings to one of "Normal" | "Wear" | "Failure".
+ * The API may return Spanish labels ("Desgaste", "Falla") — map them here.
+ */
+function normaliseLabel(s) {
+  const t = String(s).toLowerCase();
+  if (t.includes("fail") || t.includes("falla"))    return "Failure";
+  if (t.includes("wear") || t.includes("desgaste")) return "Wear";
+  return "Normal";
+}
+
+/** Format a filename like "2004.02.12.10.32.39" into a readable timestamp. */
+function prettyTs(f) {
+  const p = String(f).split(".");
+  if (p.length < 5) return f;
+  return `${p[1]}/${p[2]}  ${p[3]}:${p[4]}`;
+}
+
+/** Convert polar gauge coordinates to SVG [x, y]. */
+function polar(cx, cy, r, v) {
+  const angle = Math.PI * (1 - v / MAX_RMS);
+  return [cx + r * Math.cos(angle), cy - r * Math.sin(angle)];
+}
+
+/** Build an SVG arc path string. */
+function arc(cx, cy, r, v0, v1) {
+  const [ax, ay] = polar(cx, cy, r, v0);
+  const [bx, by] = polar(cx, cy, r, v1);
+  return `M ${ax} ${ay} A ${r} ${r} 0 0 1 ${bx} ${by}`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Gauge
+════════════════════════════════════════════════════════════════ */
+function buildGauge() {
+  document.getElementById("gauge").innerHTML = `
+    <path d="${arc(110,110,88, 0,     0.09)}" stroke="#2e7d32" stroke-width="20" fill="none"/>
+    <path d="${arc(110,110,88, 0.09,  0.15)}" stroke="#f9a825" stroke-width="20" fill="none"/>
+    <path d="${arc(110,110,88, 0.15,  0.75)}" stroke="#c62828" stroke-width="20" fill="none"/>
+    <line id="needle" x1="110" y1="110" x2="30" y2="110"
+          stroke="#0f2a43" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="110" cy="110" r="8" fill="#0f2a43"/>
+    <text id="gval" x="110" y="130" text-anchor="middle"
+          font-size="20" font-weight="900" fill="#0f2a43">0.000</text>
+  `;
+}
+
+function setNeedle(v) {
+  const [px, py] = polar(110, 110, 80, v);
+  document.getElementById("needle").setAttribute("x2", px);
+  document.getElementById("needle").setAttribute("y2", py);
+  document.getElementById("gval").textContent = v.toFixed(3);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Chart
+════════════════════════════════════════════════════════════════ */
+function drawChart(i, state) {
+  const canvas = document.getElementById("chart");
+  const W = canvas.width  = canvas.clientWidth;
+  const H = canvas.height = 190;
+  const ctx = canvas.getContext("2d");
+  const N   = rows.length;
+
+  const X = k => 8 + (k / (N - 1)) * (W - 16);
+  const Y = v => H - 14 - (Math.min(v, MAX_RMS) / MAX_RMS) * (H - 28);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Background zones
+  ctx.fillStyle = "rgba(46,125,50,.08)";
+  ctx.fillRect(X(0),     0, X(iWear) - X(0),      H);
+  ctx.fillStyle = "rgba(249,168,37,.10)";
+  ctx.fillRect(X(iWear), 0, X(iFail) - X(iWear),  H);
+  ctx.fillStyle = "rgba(229,57,53,.08)";
+  ctx.fillRect(X(iFail), 0, X(N - 1) - X(iFail),  H);
+
+  // RMS line
+  ctx.strokeStyle = "#9db4c8";
+  ctx.lineWidth   = 1.2;
+  ctx.beginPath();
+  rows.forEach((r, k) => {
+    const x = X(k), y = Y(r.f.b1_rms);
+    k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Current position dot
+  ctx.fillStyle   = COLOR[state];
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.arc(X(i), Y(rows[i].f.b1_rms), 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Render a single frame
+════════════════════════════════════════════════════════════════ */
+function render(i) {
+  const row  = rows[i];
+  const pred = preds[i];
+  const st   = normaliseLabel(pred.status);
+  lastState  = st;
+
+  // Andon lamps
+  document.getElementById("lampR").classList.toggle("on", st === "Failure");
+  document.getElementById("lampY").classList.toggle("on", st === "Wear");
+  document.getElementById("lampG").classList.toggle("on", st === "Normal");
+
+  // Gauge needle
+  setNeedle(row.f.b1_rms);
+
+  // Status banner
+  const banner = document.getElementById("banner");
+  banner.textContent        = ACTION[st];
+  banner.style.background   = COLOR[st];
+  banner.style.animation    = st === "Failure" ? "bannerBlink .8s infinite" : "none";
+
+  // KPIs
+  const health = Math.max(0, Math.min(100, Math.round(100 * (1 - row.f.b1_rms / MAX_RMS))));
+  document.getElementById("kHealth").textContent = health + "%";
+  document.getElementById("kConf").textContent   = (pred.confidence ?? 0).toFixed(1) + "%";
+  document.getElementById("kClock").textContent  = prettyTs(row.filename);
+
+  const groundTruth = normaliseLabel(row.label);
+  document.getElementById("kMatch").textContent  = groundTruth === st ? "✅ match" : "❌ mismatch";
+
+  // Chart
+  drawChart(i, st);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Animation loop
+════════════════════════════════════════════════════════════════ */
+function loop(ts) {
+  if (!playing) return;
+  if (!t0) t0 = ts;
+
+  const progress = Math.min(1, (ts - t0) / DUR);
+  document.getElementById("pfill").style.width        = (progress * 100) + "%";
+  document.getElementById("progLabel").textContent    = "LIFE CONSUMED: " + Math.round(progress * 100) + "%";
+
+  const idx = Math.floor(progress * (rows.length - 1));
+  if (idx !== cur) { cur = idx; render(idx); }
+
+  if (progress >= 1) {
+    playing = false;
+    document.getElementById("playBtn").textContent = "▶ PLAY";
+  } else {
+    raf = requestAnimationFrame(loop);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Controls
+════════════════════════════════════════════════════════════════ */
+document.getElementById("playBtn").onclick = () => {
+  if (playing) {
+    playing = false;
+    cancelAnimationFrame(raf);
+    document.getElementById("playBtn").textContent = "▶ PLAY";
+    return;
+  }
+  // Restart from beginning if we reached the end
+  if (cur >= rows.length - 1) { cur = -1; t0 = 0; }
+  playing = true;
+  document.getElementById("playBtn").textContent = "⏸ PAUSE";
+  raf = requestAnimationFrame(loop);
+};
+
+document.getElementById("resetBtn").onclick = () => {
+  playing = false;
+  cancelAnimationFrame(raf);
+  t0  = 0;
+  cur = 0;
+  document.getElementById("playBtn").textContent    = "▶ PLAY";
+  document.getElementById("pfill").style.width      = "0%";
+  document.getElementById("progLabel").textContent  = "LIFE CONSUMED: 0%";
+  if (rows.length) render(0);
+};
+
+window.onresize = () => { if (cur >= 0) drawChart(cur, lastState); };
+
+/* ════════════════════════════════════════════════════════════════
+   Initialisation — fetch CSV + batch predictions
+════════════════════════════════════════════════════════════════ */
+async function init() {
+  try {
+    // Fetch processed CSV from API
+    const csvText = await (await fetch(API + "/csv")).text();
+    const lines   = csvText.trim().split(/\r?\n/);
+    const header  = lines[0].split(",");
+    const ix      = {};
+    header.forEach((h, i) => { ix[h] = i; });
+
+    // Parse rows
+    rows = lines.slice(1).map(line => {
+      const cols = line.split(",");
+      const f    = {};
+      FEATS.forEach(k => { f[k] = parseFloat(cols[ix[k]]); });
+      return { f, label: cols[ix["label"]], filename: cols[ix["filename"]] };
+    });
+
+    // Find phase transition indices
+    iWear = rows.findIndex(r => r.label !== "Normal");
+    if (iWear < 0) iWear = 600;
+    iFail = rows.findIndex(r => {
+      const l = String(r.label).toLowerCase();
+      return l.includes("fail") || l.includes("falla");
+    });
+    if (iFail < 0) iFail = 800;
+
+    console.log(`Dataset loaded: ${rows.length} rows. Wear starts at ${iWear}, Failure at ${iFail}.`);
+
+    // Fetch batch predictions
+    const res  = await fetch(API + "/predict_batch", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(rows.map(r => r.f))
+    });
+    const data = await res.json();
+    preds = data.status.map((s, i) => ({ status: s, confidence: data.confidence[i] }));
+
+    console.log(`Predictions received: ${preds.length} entries.`);
+
+    // Build UI and render first frame
+    buildGauge();
+    cur = 0;
+    render(0);
+
+  } catch (err) {
+    console.error("Initialisation error:", err);
+    document.getElementById("banner").textContent =
+      "⚠️ API offline — start the server: python -m uvicorn src.api:app --port 8000";
+    document.getElementById("banner").style.background = "#37474f";
+  }
+}
+
+init();
+</script>
+</body>
+</html>
